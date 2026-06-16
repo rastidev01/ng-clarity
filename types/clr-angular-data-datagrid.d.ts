@@ -726,12 +726,13 @@ declare class ClrDatagridRow<T = any> implements AfterContentInit, AfterViewInit
     set clrDgRowSelectionLabel(label: string);
     get _view(): any;
     get identifyBy(): _clr_angular_data_datagrid.ClrDatagridItemsIdentityFunction<any>;
+    openDetails(event: MouseEvent, detailButton: HTMLButtonElement): void;
     ngOnInit(): void;
     ngAfterContentInit(): void;
     ngAfterViewInit(): void;
     ngOnDestroy(): void;
     toggle(selected?: boolean): void;
-    toggleExpand(): void;
+    toggleExpand(event: MouseEvent): void;
     /**
      * The default behavior in Chrome and Firefox for shift-clicking on a label is to perform text-selection.
      * This prevents our intended range-selection, because this text-selection overrides our shift-click event.
@@ -754,41 +755,6 @@ interface ClrDatagridVirtualScrollRangeInterface<T> {
     data: T[];
 }
 
-declare enum DatagridColumnChanges {
-    WIDTH = 0,
-    HIDDEN = 1,
-    INITIALIZE = 2
-}
-
-interface ColumnState {
-    columnIndex?: number;
-    changes?: DatagridColumnChanges[];
-    width?: number;
-    strictWidth?: number;
-    hideable?: boolean;
-    hidden?: boolean;
-    titleTemplateRef?: TemplateRef<any>;
-}
-interface ColumnStateDiff extends ColumnState {
-    changes: DatagridColumnChanges[];
-}
-
-declare class ColumnsService {
-    columns: BehaviorSubject<ColumnState>[];
-    columnsStateChange: BehaviorSubject<ColumnState>;
-    private _cache;
-    get columnStates(): ColumnState[];
-    get hasHideableColumns(): boolean;
-    get visibleColumns(): ColumnState[];
-    cache(): void;
-    hasCache(): boolean;
-    resetToLastCache(): void;
-    emitStateChangeAt(columnIndex: number, diff: ColumnStateDiff): void;
-    emitStateChange(column: BehaviorSubject<ColumnState>, diff: ColumnStateDiff): void;
-    static ɵfac: i0.ɵɵFactoryDeclaration<ColumnsService, never>;
-    static ɵprov: i0.ɵɵInjectableDeclaration<ColumnsService>;
-}
-
 type CdkVirtualForInputKey = 'cdkVirtualForOf' | 'cdkVirtualForTrackBy' | 'cdkVirtualForTemplate' | 'cdkVirtualForTemplateCacheSize';
 type CdkVirtualForInputs<T> = Partial<Pick<CdkVirtualForOf<T>, CdkVirtualForInputKey>>;
 type CdkFixedSizeVirtualScrollInputs = Pick<CdkFixedSizeVirtualScroll, 'itemSize' | 'minBufferPx' | 'maxBufferPx'>;
@@ -804,7 +770,6 @@ declare class ClrDatagridVirtualScrollDirective<T> implements AfterViewInit, DoC
     private readonly scrollDispatcher;
     private readonly viewportRuler;
     private readonly datagrid;
-    private columnsService;
     private readonly injector;
     renderedRangeChange: EventEmitter<ListRange>;
     persistItems: boolean;
@@ -823,7 +788,7 @@ declare class ClrDatagridVirtualScrollDirective<T> implements AfterViewInit, DoC
     private mutationChanges;
     private cdkVirtualForInputs;
     private _totalItems;
-    constructor(changeDetectorRef: ChangeDetectorRef, iterableDiffers: IterableDiffers, items: Items<T>, ngZone: NgZone, renderer2: Renderer2, templateRef: TemplateRef<CdkVirtualForOfContext<T>>, viewContainerRef: ViewContainerRef, directionality: Directionality, scrollDispatcher: ScrollDispatcher, viewportRuler: ViewportRuler, datagrid: ClrDatagrid, columnsService: ColumnsService, injector: EnvironmentInjector);
+    constructor(changeDetectorRef: ChangeDetectorRef, iterableDiffers: IterableDiffers, items: Items<T>, ngZone: NgZone, renderer2: Renderer2, templateRef: TemplateRef<CdkVirtualForOfContext<T>>, viewContainerRef: ViewContainerRef, directionality: Directionality, scrollDispatcher: ScrollDispatcher, viewportRuler: ViewportRuler, datagrid: ClrDatagrid, injector: EnvironmentInjector);
     get totalContentHeight(): string;
     get cdkVirtualForOf(): CdkVirtualForInputs<T>["cdkVirtualForOf"];
     set cdkVirtualForOf(value: CdkVirtualForInputs<T>['cdkVirtualForOf']);
@@ -951,6 +916,7 @@ declare class ClrDatagrid<T = any> implements AfterContentInit, AfterViewInit, O
      * The application can provide custom select all logic.
      */
     customSelectAllEnabled: boolean;
+    selectAllDisabled: boolean;
     customSelectAll: EventEmitter<boolean>;
     /**
      * Expose virtual scroll directive for applications to access its public methods
@@ -1053,7 +1019,7 @@ declare class ClrDatagrid<T = any> implements AfterContentInit, AfterViewInit, O
     private toggleVirtualScrollSubscriptions;
     private handleResizeChanges;
     static ɵfac: i0.ɵɵFactoryDeclaration<ClrDatagrid<any>, never>;
-    static ɵcmp: i0.ɵɵComponentDeclaration<ClrDatagrid<any>, "clr-datagrid", never, { "loadingMoreItems": { "alias": "clrLoadingMoreItems"; "required": false; }; "clrDgSingleSelectionAriaLabel": { "alias": "clrDgSingleSelectionAriaLabel"; "required": false; }; "clrDgSingleActionableAriaLabel": { "alias": "clrDgSingleActionableAriaLabel"; "required": false; }; "clrDetailExpandableAriaLabel": { "alias": "clrDetailExpandableAriaLabel"; "required": false; }; "clrDgDisablePageFocus": { "alias": "clrDgDisablePageFocus"; "required": false; }; "customSelectAllEnabled": { "alias": "clrDgCustomSelectAllEnabled"; "required": false; }; "loading": { "alias": "clrDgLoading"; "required": false; }; "selectionType": { "alias": "clrDgSelectionType"; "required": false; }; "selected": { "alias": "clrDgSelected"; "required": false; }; "clrDgPreserveSelection": { "alias": "clrDgPreserveSelection"; "required": false; }; "rowSelectionMode": { "alias": "clrDgRowSelection"; "required": false; }; "identityFn": { "alias": "clrDgItemsIdentityFn"; "required": false; }; }, { "selectedChanged": "clrDgSelectedChange"; "refresh": "clrDgRefresh"; "customSelectAll": "clrDgCustomSelectAll"; }, ["iterator", "placeholder", "_virtualScroll", "columns", "rows"], ["clr-dg-action-bar", "clr-dg-placeholder", "clr-dg-footer", "[clrIfDetail],clr-dg-detail"], false, never>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<ClrDatagrid<any>, "clr-datagrid", never, { "loadingMoreItems": { "alias": "clrLoadingMoreItems"; "required": false; }; "clrDgSingleSelectionAriaLabel": { "alias": "clrDgSingleSelectionAriaLabel"; "required": false; }; "clrDgSingleActionableAriaLabel": { "alias": "clrDgSingleActionableAriaLabel"; "required": false; }; "clrDetailExpandableAriaLabel": { "alias": "clrDetailExpandableAriaLabel"; "required": false; }; "clrDgDisablePageFocus": { "alias": "clrDgDisablePageFocus"; "required": false; }; "customSelectAllEnabled": { "alias": "clrDgCustomSelectAllEnabled"; "required": false; }; "selectAllDisabled": { "alias": "clrDgSelectAllDisabled"; "required": false; }; "loading": { "alias": "clrDgLoading"; "required": false; }; "selectionType": { "alias": "clrDgSelectionType"; "required": false; }; "selected": { "alias": "clrDgSelected"; "required": false; }; "clrDgPreserveSelection": { "alias": "clrDgPreserveSelection"; "required": false; }; "rowSelectionMode": { "alias": "clrDgRowSelection"; "required": false; }; "identityFn": { "alias": "clrDgItemsIdentityFn"; "required": false; }; }, { "selectedChanged": "clrDgSelectedChange"; "refresh": "clrDgRefresh"; "customSelectAll": "clrDgCustomSelectAll"; }, ["iterator", "placeholder", "_virtualScroll", "columns", "rows"], ["clr-dg-action-bar", "clr-dg-placeholder", "clr-dg-footer", "[clrIfDetail],clr-dg-detail"], false, never>;
     static ngAcceptInputType_selectionType: SelectionType | string;
 }
 
@@ -1083,6 +1049,41 @@ declare class ClrDatagridActionOverflow implements OnDestroy {
     private initializeFocus;
     static ɵfac: i0.ɵɵFactoryDeclaration<ClrDatagridActionOverflow, never>;
     static ɵcmp: i0.ɵɵComponentDeclaration<ClrDatagridActionOverflow, "clr-dg-action-overflow", never, { "buttonLabel": { "alias": "clrDgActionOverflowButtonLabel"; "required": false; }; "open": { "alias": "clrDgActionOverflowOpen"; "required": false; }; }, { "openChange": "clrDgActionOverflowOpenChange"; }, never, ["*"], false, [{ directive: typeof i1.ClrPopoverHostDirective; inputs: {}; outputs: {}; }]>;
+}
+
+declare enum DatagridColumnChanges {
+    WIDTH = 0,
+    HIDDEN = 1,
+    INITIALIZE = 2
+}
+
+interface ColumnState {
+    columnIndex?: number;
+    changes?: DatagridColumnChanges[];
+    width?: number;
+    strictWidth?: number;
+    hideable?: boolean;
+    hidden?: boolean;
+    titleTemplateRef?: TemplateRef<any>;
+}
+interface ColumnStateDiff extends ColumnState {
+    changes: DatagridColumnChanges[];
+}
+
+declare class ColumnsService {
+    columns: BehaviorSubject<ColumnState>[];
+    columnsStateChange: BehaviorSubject<ColumnState>;
+    private _cache;
+    get columnStates(): ColumnState[];
+    get hasHideableColumns(): boolean;
+    get visibleColumns(): ColumnState[];
+    cache(): void;
+    hasCache(): boolean;
+    resetToLastCache(): void;
+    emitStateChangeAt(columnIndex: number, diff: ColumnStateDiff): void;
+    emitStateChange(column: BehaviorSubject<ColumnState>, diff: ColumnStateDiff): void;
+    static ɵfac: i0.ɵɵFactoryDeclaration<ColumnsService, never>;
+    static ɵprov: i0.ɵɵInjectableDeclaration<ColumnsService>;
 }
 
 declare class ClrDatagridColumnToggle implements OnDestroy {
@@ -1790,20 +1791,22 @@ declare class DatagridMainRenderer implements AfterContentInit, AfterViewInit, A
 
 declare class DatagridRowRenderer implements AfterContentInit, OnDestroy {
     private columnsService;
+    private el;
     cells: QueryList<DatagridCellRenderer>;
     expandableRows: DatagridRowDetailRenderer[];
     private subscriptions;
-    constructor(columnsService: ColumnsService);
+    constructor(columnsService: ColumnsService, el: ElementRef<HTMLElement>);
     ngAfterContentInit(): void;
     ngOnDestroy(): void;
     setCellsState(): void;
+    private addDetachedRowsColumnStateChangesListener;
     static ɵfac: i0.ɵɵFactoryDeclaration<DatagridRowRenderer, never>;
     static ɵdir: i0.ɵɵDirectiveDeclaration<DatagridRowRenderer, "clr-dg-row", never, {}, {}, ["cells"], never, false, never>;
 }
 
 declare class DatagridRowDetailRenderer extends DatagridRowRenderer implements OnDestroy {
     private parentRow;
-    constructor(parentRow: DatagridRowRenderer, columnsService: ColumnsService);
+    constructor(parentRow: DatagridRowRenderer, columnsService: ColumnsService, el: ElementRef<HTMLElement>);
     ngOnDestroy(): void;
     static ɵfac: i0.ɵɵFactoryDeclaration<DatagridRowDetailRenderer, never>;
     static ɵdir: i0.ɵɵDirectiveDeclaration<DatagridRowDetailRenderer, "clr-dg-row-detail", never, {}, {}, never, never, false, never>;
